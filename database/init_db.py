@@ -1,11 +1,12 @@
-from connection import get_db_connection
+from database.connection import get_db_connection # កែសម្រួលទី១
 
 def create_tables():
-    # ហៅទូរស័ព្ទទៅភ្ជាប់ជាមួយ Database ដោយប្រើ function ពីឯកសារ connection.py
     conn = get_db_connection()
     if conn is None:
         return
 
+    cursor = None # កែសម្រួលទី២: បង្កើតវាទុកមុនដើម្បីការពារកំហុស
+    
     try:
         cursor = conn.cursor()
         
@@ -25,31 +26,27 @@ def create_tables():
         CREATE TABLE IF NOT EXISTS stock_transactions (
             id SERIAL PRIMARY KEY,
             product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-            transaction_type VARCHAR(10) NOT NULL, -- ដាក់បានតែពាក្យ 'IN' ឬ 'OUT'
+            transaction_type VARCHAR(4) CHECK (transaction_type IN ('IN', 'OUT')) NOT NULL, -- កែសម្រួលទី៣
             quantity INTEGER NOT NULL,
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """
         
-        # បញ្ជាឲ្យដំណើរការកូដ SQL ខាងលើ
         cursor.execute(create_tables_sql)
-        
-        # Save ការផ្លាស់ប្តូរទៅកាន់ Database
         conn.commit()
-        
         print("🎉 បង្កើតតារាង products និង stock_transactions បានជោគជ័យ!")
         
     except Exception as e:
         print(f"❌ មានបញ្ហាក្នុងការបង្កើតតារាង: {e}")
         
     finally:
-        # បិទការភ្ជាប់វិញ ក្រោយពេលធ្វើការងារចប់ ដើម្បីកុំឲ្យធ្ងន់ម៉ាស៊ីន
-        if conn:
+        # បិទការភ្ជាប់វិញដោយសុវត្ថិភាព
+        if cursor: 
             cursor.close()
+        if conn:
             conn.close()
             print("បិទការតភ្ជាប់វិញដោយសុវត្ថិភាព។")
 
-# បញ្ជាឲ្យមុខងារនេះដើរនៅពេលយើង Run ឯកសារនេះ
 if __name__ == "__main__":
     create_tables()
